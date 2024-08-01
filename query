@@ -1,0 +1,98 @@
+--1.Which product categories drive the biggest profits? Is this the same across store locations?
+	--*profit = Revenue - COGs ( join both sales table and product table)
+	--*profit and group it by the categories and desc sort
+	--*Update Product_price to remove '$' and spaces
+
+--**-- Some Cleaning---
+UPDATE products
+SET Product_price = REPLACE(REPLACE(Product_price, '$', ''), ' ', '')
+WHERE Product_price LIKE '%$%' OR Product_price LIKE '% %';
+
+UPDATE products
+SET Product_Cost = REPLACE(REPLACE(Product_Cost, '$', ''), ' ', '')
+WHERE Product_Cost LIKE '%$%' OR Product_Cost LIKE '% %';
+
+--Cleaning Done--
+
+--**Change data types after receiving error--
+
+ALTER TABLE products
+ALTER COLUMN Product_price Float;
+
+ALTER TABLE products
+ALTER COLUMN Product_Cost Float;
+
+ALTER TABLE products
+ALTER COLUMN Product_id INT;
+
+ALTER TABLE sales
+ALTER COLUMN Units INT;
+
+ALTER TABLE sales
+ALTER COLUMN [Date] date;
+
+alter table inventory
+alter column stock_on_hand int;
+--Done--
+
+-------SOLUTIONS---
+WITH CTE1 AS (
+    SELECT
+        s.Units,
+        p.Product_Category,
+        p.Product_Price,
+        p.Product_Cost
+    FROM sales s
+    JOIN products p ON s.Product_ID = p.Product_ID
+),
+CTE2 AS (
+    SELECT
+        Product_Category,
+        ROUND(SUM(Units * Product_Price), 2) AS Revenue,
+        ROUND(SUM(Units * Product_Cost), 2) AS COGs
+    FROM CTE1
+    GROUP BY Product_Category
+)
+select 
+product_category,
+(Revenue-COGs) as profit
+from CTE2
+--is it the same across all the stoes 
+	--*How many loactions are we talking about
+	--*am gonna need the stores table - sales tables and -products 
+	--*need either to use row number or rank them
+
+WITH CTE1 AS (
+    SELECT
+        s.Units,
+		st.store_location,
+		p.Product_Category,
+        p.Product_Price,
+        p.Product_Cost
+    FROM sales s
+    JOIN products p ON s.Product_ID = p.Product_ID
+	JOIN stores st ON s.store_id = st.store_id
+),
+CTE2 AS (
+    SELECT
+		Store_Location,
+		Product_Category,
+        round(sum(Units * Product_Price),2) AS Revenue,
+        round(sum(Units * Product_Cost),2) AS COGs 
+    FROM CTE1
+	group by Product_Category,Store_Location
+),
+CTE3 AS (
+	SELECT 
+		store_location,
+		Product_category,
+		Revenue - COGs as Profit,
+		row_number() over(partition by store_location order by Revenue - COGs Desc) rn
+	FROM CTE2
+)
+select
+	store_location,
+	product_category,
+	Profit
+from CTE3
+where rn = 1
