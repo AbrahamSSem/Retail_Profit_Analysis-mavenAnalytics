@@ -4,6 +4,7 @@
 	--*Update Product_price to remove '$' and spaces
 
 --**-- Some Cleaning---
+--Remove dollar signs ($) and spaces from the Product_price and Product_Cost columns.
 UPDATE products
 SET Product_price = REPLACE(REPLACE(Product_price, '$', ''), ' ', '')
 WHERE Product_price LIKE '%$%' OR Product_price LIKE '% %';
@@ -14,8 +15,7 @@ WHERE Product_Cost LIKE '%$%' OR Product_Cost LIKE '% %';
 
 --Cleaning Done--
 
---**Change data types after receiving error--
-
+--**Change data types --
 ALTER TABLE products
 ALTER COLUMN Product_price Float;
 
@@ -36,7 +36,8 @@ alter column stock_on_hand int;
 --Done--
 
 -------SOLUTIONS---
-WITH CTE1 AS (
+--This query calculates the total profit by product category across all stores using common table expressions.
+WITH CTE1 AS (   
     SELECT
         s.Units,
         p.Product_Category,
@@ -57,11 +58,14 @@ select
 product_category,
 (Revenue-COGs) as profit
 from CTE2
+
+
+
 --is it the same across all the stoes 
-	--*How many loactions are we talking about
+	--*How many loactions are we talking about?
 	--*am gonna need the stores table - sales tables and -products 
 	--*need either to use row number or rank them
-
+---This query identifies the most profitable product category for each store location using some window function like row number.
 WITH CTE1 AS (
     SELECT
         s.Units,
