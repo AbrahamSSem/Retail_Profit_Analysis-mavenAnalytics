@@ -1,4 +1,4 @@
-# Retail Profit Analysis
+# Retail Profit Analysis using SQL
 
 This repository contains SQL queries for analyzing product profitability across different store locations in a retail dataset.
 
